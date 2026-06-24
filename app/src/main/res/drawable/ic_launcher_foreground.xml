@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Fast-forward speed stripes (Left Chevron) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M32,34 L32,74 L54,54 Z" />
+        
+    <!-- Fast-forward speed stripes (Right Chevron) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,34 L54,74 L76,54 Z" />
+
+    <!-- External thin tech/speed circles -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M 54,16 A 38,38 0 0,1 92,54" />
+
+    <path
+        android:strokeColor="#A7F3D0"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M 54,92 A 38,38 0 0,1 16,54" />
+        
+    <path
+        android:strokeColor="#9CE5FF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M 18,44 A 38,38 0 0,1 44,18" />
+
+    <path
+        android:strokeColor="#9CE5FF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M 90,64 A 38,38 0 0,1 64,90" />
+</vector>

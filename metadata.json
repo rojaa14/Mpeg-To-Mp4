@@ -1,0 +1,6 @@
+{
+  "name": "Konvert",
+  "description": "A high-speed, local offline MPEG to MP4 video converter application for Android.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
