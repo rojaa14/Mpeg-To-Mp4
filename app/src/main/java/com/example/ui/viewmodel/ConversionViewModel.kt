@@ -3,6 +3,7 @@ package com.example.ui.viewmodel
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -50,6 +51,28 @@ class ConversionViewModel(private val repository: ConversionRepository) : ViewMo
     private val _lastConvertedFilePath = MutableStateFlow<String?>(null)
     val lastConvertedFilePath: StateFlow<String?> = _lastConvertedFilePath.asStateFlow()
 
+    // NEW: Compression mode & Auto-save configurations
+    private val _isCompressionMode = MutableStateFlow(false)
+    val isCompressionMode: StateFlow<Boolean> = _isCompressionMode.asStateFlow()
+
+    private val _compressionRatio = MutableStateFlow(0.5f) // 0.5f means 50% target compression (Keep high quality, decrease bytes)
+    val compressionRatio: StateFlow<Float> = _compressionRatio.asStateFlow()
+
+    private val _autoSaveToDownloads = MutableStateFlow(true) // Save to public downloads automatically after conversion
+    val autoSaveToDownloads: StateFlow<Boolean> = _autoSaveToDownloads.asStateFlow()
+
+    fun setCompressionMode(enabled: Boolean) {
+        _isCompressionMode.value = enabled
+    }
+
+    fun setCompressionRatio(ratio: Float) {
+        _compressionRatio.value = ratio
+    }
+
+    fun setAutoSaveToDownloads(enabled: Boolean) {
+        _autoSaveToDownloads.value = enabled
+    }
+
     // Selects a file and extracts metadata
     fun selectFile(context: Context, uri: Uri) {
         _selectedFileUri.value = uri
@@ -86,11 +109,14 @@ class ConversionViewModel(private val repository: ConversionRepository) : ViewMo
         _lastConvertedFilePath.value = null
     }
 
-    // Starts the native local conversion
+    // Starts the native local conversion or compression
     fun startConversion(context: Context, customOutputName: String = "") {
         val uri = _selectedFileUri.value ?: return
         val originalName = _selectedFileName.value
         val originalSize = _selectedFileSize.value
+        val isCompress = _isCompressionMode.value
+        val ratio = _compressionRatio.value
+        val autoSave = _autoSaveToDownloads.value
 
         viewModelScope.launch {
             _isConverting.value = true
@@ -102,7 +128,8 @@ class ConversionViewModel(private val repository: ConversionRepository) : ViewMo
             } else {
                 originalName.substringBeforeLast(".")
             }
-            val outputFileName = "$baseName.mp4"
+            val suffix = if (isCompress) "_compressed" else ""
+            val outputFileName = "${baseName}${suffix}.mp4"
 
             // Save in App's local files directory so it's always accessible and offline-safe
             val outputDir = File(context.filesDir, "Konvert_Outputs")
@@ -113,13 +140,24 @@ class ConversionViewModel(private val repository: ConversionRepository) : ViewMo
 
             val startTime = System.currentTimeMillis()
 
-            val success = VideoConverterEngine.remuxMpegToMp4(
-                context = context,
-                inputUri = uri,
-                outputFile = outputFile,
-                progressFlow = _conversionProgress,
-                statusFlow = _conversionStatus
-            )
+            val success = if (isCompress) {
+                VideoConverterEngine.compressVideoWithoutLoweringResolution(
+                    context = context,
+                    inputUri = uri,
+                    outputFile = outputFile,
+                    progressFlow = _conversionProgress,
+                    statusFlow = _conversionStatus,
+                    compressionRatio = ratio
+                )
+            } else {
+                VideoConverterEngine.remuxMpegToMp4(
+                    context = context,
+                    inputUri = uri,
+                    outputFile = outputFile,
+                    progressFlow = _conversionProgress,
+                    statusFlow = _conversionStatus
+                )
+            }
 
             val endTime = System.currentTimeMillis()
             val duration = endTime - startTime
@@ -141,14 +179,61 @@ class ConversionViewModel(private val repository: ConversionRepository) : ViewMo
                 )
             )
 
+            if (success && autoSave) {
+                _conversionStatus.value = "Menyimpan otomatis ke folder Unduhan..."
+                saveFileToDownloads(context, outputFile.absolutePath, outputFileName)
+            }
+
             _isConverting.value = false
             if (success) {
                 _lastConvertedFilePath.value = outputFile.absolutePath
-                _conversionStatus.value = "Konversi Berhasil!"
+                _conversionStatus.value = if (autoSave) "Berhasil disimpan ke folder Unduhan!" else "Konversi Berhasil!"
             } else {
                 _conversionStatus.value = "Konversi Gagal. Silakan coba file lain."
             }
         }
+    }
+
+    // Direct manual download saving triggers
+    fun saveFileToDownloads(context: Context, sourceFilePath: String, outputFileName: String): Uri? {
+        try {
+            val sourceFile = File(sourceFilePath)
+            if (!sourceFile.exists()) return null
+
+            val resolver = context.contentResolver
+            val contentValues = android.content.ContentValues().apply {
+                put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, outputFileName)
+                put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                    put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS + "/Konvert")
+                    put(android.provider.MediaStore.MediaColumns.IS_PENDING, 1)
+                }
+            }
+
+            val collection = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI
+            } else {
+                android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+            }
+
+            val uri = resolver.insert(collection, contentValues)
+            if (uri != null) {
+                resolver.openOutputStream(uri)?.use { out ->
+                    sourceFile.inputStream().use { input ->
+                        input.copyTo(out)
+                    }
+                }
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                    contentValues.clear()
+                    contentValues.put(android.provider.MediaStore.MediaColumns.IS_PENDING, 0)
+                    resolver.update(uri, contentValues, null, null)
+                }
+                return uri
+            }
+        } catch (e: Exception) {
+            Log.e("ConversionViewModel", "Gagal menyimpan berkas ke folder Unduhan: ${e.message}", e)
+        }
+        return null
     }
 
     // Delete item from history

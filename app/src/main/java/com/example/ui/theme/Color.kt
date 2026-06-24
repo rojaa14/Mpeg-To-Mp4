@@ -2,21 +2,24 @@ package com.example.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Dark Scheme Colors
-val Indigo80 = Color(0xFFA5C0FF)
-val Cyan80 = Color(0xFF9CE5FF)
-val Mint80 = Color(0xFFA7F3D0)
+// Light Clean Utility / Minimal Colors
+val PurplePrimary = Color(0xFF6750A4)
+val PurpleSecondary = Color(0xFFEADDFF)
+val PurpleTertiary = Color(0xFF10B981) // Mint green for success/badges
 
-// Light Scheme Colors
-val Indigo40 = Color(0xFF3B62E3)
-val Cyan40 = Color(0xFF0EA5E9)
-val Mint40 = Color(0xFF10B981)
+val BackgroundLight = Color(0xFFFEF7FF)
+val SurfaceLight = Color(0xFFF3EDF7)
+val OnSurfaceLight = Color(0xFF1D1B20)
+val OutlineLight = Color(0xFFCAC4D0)
 
-val BackgroundLight = Color(0xFFF8FAFC)
-val SurfaceLight = Color(0xFFFFFFFF)
-val OnSurfaceLight = Color(0xFF0F172A)
+// Dark Clean Utility / Minimal Colors (Cohesive fallback)
+val PurplePrimaryDark = Color(0xFFD0BCFF)
+val PurpleSecondaryDark = Color(0xFFCCC2DC)
+val PurpleTertiaryDark = Color(0xFFA7F3D0)
 
-val BackgroundDark = Color(0xFF0F172A)
-val SurfaceDark = Color(0xFF1E293B)
-val OnSurfaceDark = Color(0xFFF8FAFC)
+val BackgroundDark = Color(0xFF141218)
+val SurfaceDark = Color(0xFF211F26)
+val OnSurfaceDark = Color(0xFFE6E1E5)
+val OutlineDark = Color(0xFF938F99)
+
 

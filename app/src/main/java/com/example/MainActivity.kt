@@ -14,6 +14,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -254,6 +255,10 @@ fun ConvertTab(viewModel: ConversionViewModel) {
     val lastConvertedPath by viewModel.lastConvertedFilePath.collectAsStateWithLifecycle()
     val selectedFileUri by viewModel.selectedFileUri.collectAsStateWithLifecycle()
 
+    val isCompressionMode by viewModel.isCompressionMode.collectAsStateWithLifecycle()
+    val compressionRatio by viewModel.compressionRatio.collectAsStateWithLifecycle()
+    val autoSaveToDownloads by viewModel.autoSaveToDownloads.collectAsStateWithLifecycle()
+
     var customOutputName by remember { mutableStateOf("") }
 
     val filePickerLauncher = rememberLauncherForActivityResult(
@@ -275,7 +280,7 @@ fun ConvertTab(viewModel: ConversionViewModel) {
         // Hero Graphic & Title Banner
         item {
             Card(
-                shape = RoundedCornerShape(24.dp),
+                shape = RoundedCornerShape(28.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 ),
@@ -310,39 +315,47 @@ fun ConvertTab(viewModel: ConversionViewModel) {
             }
         }
 
-        // Selected File Area
+        // Selected File Area (Matches 'rounded-3xl p-6')
         item {
             if (selectedFileUri == null) {
                 // Empty state select card
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(150.dp)
-                        .clip(RoundedCornerShape(20.dp))
+                        .height(160.dp)
+                        .clip(RoundedCornerShape(28.dp))
                         .border(
                             width = 2.dp,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
-                            shape = RoundedCornerShape(20.dp)
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                            shape = RoundedCornerShape(28.dp)
                         )
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.05f))
+                        .background(MaterialTheme.colorScheme.surface)
                         .clickable { filePickerLauncher.launch("video/*") }
                         .testTag("select_file_target"),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.CloudUpload,
-                            contentDescription = "Pilih Video",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(48.dp)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CloudUpload,
+                                contentDescription = "Pilih Video",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
                         Text(
                             text = "Ketuk untuk memilih file MPEG",
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodyLarge
                         )
                         Text(
                             text = "Mendukung format .mpg, .mpeg, .ts",
@@ -352,33 +365,34 @@ fun ConvertTab(viewModel: ConversionViewModel) {
                     }
                 }
             } else {
-                // File loaded state card
+                // File loaded state card (rounded-3xl)
                 Card(
-                    shape = RoundedCornerShape(20.dp),
+                    shape = RoundedCornerShape(28.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surface
                     ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                    Column(modifier = Modifier.padding(20.dp)) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(48.dp)
+                                    .size(54.dp)
                                     .background(
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                                        CircleShape
+                                        MaterialTheme.colorScheme.primary,
+                                        RoundedCornerShape(16.dp)
                                     ),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.VideoFile,
                                     contentDescription = "Berkas MPEG",
-                                    tint = MaterialTheme.colorScheme.primary
+                                    tint = Color.White,
+                                    modifier = Modifier.size(28.dp)
                                 )
                             }
                             Column(modifier = Modifier.weight(1f)) {
@@ -386,10 +400,11 @@ fun ConvertTab(viewModel: ConversionViewModel) {
                                     text = fileName,
                                     fontWeight = FontWeight.Bold,
                                     maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    overflow = TextOverflow.Ellipsis,
+                                    style = MaterialTheme.typography.bodyLarge
                                 )
                                 Text(
-                                    text = formatFileSize(fileSize),
+                                    text = "${formatFileSize(fileSize)} • MPEG Format",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
@@ -411,12 +426,12 @@ fun ConvertTab(viewModel: ConversionViewModel) {
 
                         // Configuration fields
                         Text(
-                            text = "Simpan Sebagai (Nama File Baru)",
+                            text = "SIMPAN SEBAGAI",
                             fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
                         OutlinedTextField(
                             value = customOutputName,
                             onValueChange = { customOutputName = it },
@@ -424,16 +439,176 @@ fun ConvertTab(viewModel: ConversionViewModel) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag("custom_name_input"),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(16.dp),
                             enabled = !isConverting,
                             trailingIcon = { Text(".mp4", fontWeight = FontWeight.Bold, modifier = Modifier.padding(end = 12.dp)) }
                         )
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // MODE OPERASI Selection
                         Text(
-                            text = "Estimasi konversi: < 15 detik (Optimasi Kecepatan Remuxing Aktif)",
+                            text = "MODE OPERASI",
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Card(
+                                onClick = { if (!isConverting) viewModel.setCompressionMode(false) },
+                                shape = RoundedCornerShape(16.dp),
+                                border = BorderStroke(
+                                    2.dp,
+                                    if (!isCompressionMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                                ),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (!isCompressionMode) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface
+                                ),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(12.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Bolt,
+                                        contentDescription = "Remux",
+                                        tint = if (!isCompressionMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Remux Standar",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp,
+                                        color = if (!isCompressionMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = "Instan, tanpa kompresi",
+                                        fontSize = 10.sp,
+                                        textAlign = TextAlign.Center,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                    )
+                                }
+                            }
+
+                            Card(
+                                onClick = { if (!isConverting) viewModel.setCompressionMode(true) },
+                                shape = RoundedCornerShape(16.dp),
+                                border = BorderStroke(
+                                    2.dp,
+                                    if (isCompressionMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                                ),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (isCompressionMode) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface
+                                ),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(12.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Compress,
+                                        contentDescription = "Compress",
+                                        tint = if (isCompressionMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Kompres Video",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp,
+                                        color = if (isCompressionMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = "Pangkas ukuran berkas",
+                                        fontSize = 10.sp,
+                                        textAlign = TextAlign.Center,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                    )
+                                }
+                            }
+                        }
+
+                        // If compression mode is active, show the ratio selector
+                        AnimatedVisibility(visible = isCompressionMode) {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = "TINGKAT KOMPRESI (RESOLUSI TETAP ASLI)",
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    val ratios = listOf(0.7f to "Sedikit (70%)", 0.5f to "Sedang (50%)", 0.3f to "Tinggi (30%)")
+                                    ratios.forEach { (ratioValue, label) ->
+                                        val isSelected = compressionRatio == ratioValue
+                                        ElevatedFilterChip(
+                                            selected = isSelected,
+                                            onClick = { if (!isConverting) viewModel.setCompressionRatio(ratioValue) },
+                                            label = { Text(label, fontSize = 11.sp, fontWeight = FontWeight.Bold) },
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = "Mengurangi bitrate cerdas untuk mempertahankan resolusi penuh video Anda tanpa diturunkan.",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(top = 6.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // AUTO-SAVE Option Row
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(enabled = !isConverting) { viewModel.setAutoSaveToDownloads(!autoSaveToDownloads) },
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Simpan Otomatis Ke Folder Unduhan",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Secara otomatis mencadangkan video hasil konversi ke folder Unduhan luar ponsel Anda.",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                )
+                            }
+                            Switch(
+                                checked = autoSaveToDownloads,
+                                onCheckedChange = { viewModel.setAutoSaveToDownloads(it) },
+                                enabled = !isConverting,
+                                modifier = Modifier.padding(start = 12.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = if (isCompressionMode) "Estimasi kompresi: < 25 detik (Preserve Resolution)" else "Estimasi kecepatan: < 15 detik (Optimasi Kecepatan Aktif)",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.tertiary,
+                            color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
@@ -441,7 +616,63 @@ fun ConvertTab(viewModel: ConversionViewModel) {
             }
         }
 
-        // Conversion Active state / Progress Panel
+        // Two-column Grid (Target Quality, Audio Codec)
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Left Grid Item
+                Card(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "KUALITAS TARGET",
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "1080p (Asli)",
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+
+                // Right Grid Item
+                Card(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "AUDIO CODEC",
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "AAC Passthrough",
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+        }
+
+        // Conversion Active state / Progress Panel (Matches Clean Utility styling perfectly)
         item {
             AnimatedVisibility(
                 visible = isConverting || progress > 0f,
@@ -449,20 +680,20 @@ fun ConvertTab(viewModel: ConversionViewModel) {
                 exit = fadeOut(animationSpec = tween(300))
             ) {
                 Card(
-                    shape = RoundedCornerShape(20.dp),
+                    shape = RoundedCornerShape(28.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f)
+                        containerColor = MaterialTheme.colorScheme.surface
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
                         .border(
                             1.dp,
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                            RoundedCornerShape(20.dp)
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                            RoundedCornerShape(28.dp)
                         )
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Row(
@@ -471,9 +702,10 @@ fun ConvertTab(viewModel: ConversionViewModel) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = if (progress < 1.0f) "Sedang mengonversi..." else "Selesai!",
+                                text = if (progress < 1.0f) "Mengonversi ke MP4..." else "Konversi Selesai!",
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.bodyMedium
                             )
                             Text(
                                 text = "${(progress * 100).toInt()}%",
@@ -489,8 +721,8 @@ fun ConvertTab(viewModel: ConversionViewModel) {
                             progress = { progress },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(10.dp)
-                                .clip(CircleShape)
+                                .height(16.dp)
+                                .clip(RoundedCornerShape(8.dp))
                                 .testTag("conversion_progress_indicator"),
                             color = MaterialTheme.colorScheme.primary,
                             trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
@@ -498,12 +730,21 @@ fun ConvertTab(viewModel: ConversionViewModel) {
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        Text(
-                            text = status,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium,
-                            textAlign = TextAlign.Center
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Kecepatan: 100MB/mnt",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                            Text(
+                                text = status,
+                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                            )
+                        }
                     }
                 }
             }
@@ -514,14 +755,15 @@ fun ConvertTab(viewModel: ConversionViewModel) {
             if (selectedFileUri != null && !isConverting) {
                 Button(
                     onClick = { viewModel.startConversion(context, customOutputName) },
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(28.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
                         .testTag("start_conversion_button"),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary
-                    )
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
@@ -545,53 +787,63 @@ fun ConvertTab(viewModel: ConversionViewModel) {
             ) {
                 lastConvertedPath?.let { path ->
                     Card(
-                        shape = RoundedCornerShape(20.dp),
+                        shape = RoundedCornerShape(28.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.08f)
+                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f)
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
                             .border(
                                 1.dp,
-                                MaterialTheme.colorScheme.tertiary.copy(alpha = 0.3f),
-                                RoundedCornerShape(20.dp)
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                RoundedCornerShape(28.dp)
                             )
                     ) {
                         Column(
-                            modifier = Modifier.padding(16.dp),
+                            modifier = Modifier.padding(20.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = "Sukses",
-                                tint = MaterialTheme.colorScheme.tertiary,
-                                modifier = Modifier.size(44.dp)
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .size(54.dp)
+                                    .background(MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "Sukses",
+                                    tint = MaterialTheme.colorScheme.tertiary,
+                                    modifier = Modifier.size(32.dp)
+                                )
+                            }
                             Text(
                                 text = "Konversi Berhasil Diselesaikan!",
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.tertiary,
-                                fontSize = 16.sp
+                                color = MaterialTheme.colorScheme.primary,
+                                fontSize = 18.sp
                             )
                             Text(
-                                text = "Hasil MP4 disimpan di penyimpanan internal offline aplikasi Anda.",
+                                text = "Hasil MP4 disimpan di penyimpanan internal offline aman ponsel Anda.",
                                 style = MaterialTheme.typography.bodySmall,
-                                textAlign = TextAlign.Center
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                             )
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
+                                var isSavedSuccessfully by remember { mutableStateOf(false) }
+
                                 Button(
                                     onClick = { playVideo(context, path) },
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = MaterialTheme.colorScheme.primary
                                     ),
-                                    shape = RoundedCornerShape(12.dp),
+                                    shape = RoundedCornerShape(16.dp),
                                     modifier = Modifier
-                                        .weight(1f)
+                                        .weight(1.1f)
                                         .testTag("play_converted_video")
                                 ) {
                                     Icon(imageVector = Icons.Default.PlayArrow, contentDescription = "Putar")
@@ -599,10 +851,36 @@ fun ConvertTab(viewModel: ConversionViewModel) {
                                     Text("Putar")
                                 }
 
+                                Button(
+                                    onClick = {
+                                        val sourceFile = File(path)
+                                        val uri = viewModel.saveFileToDownloads(context, path, sourceFile.name)
+                                        if (uri != null) {
+                                            isSavedSuccessfully = true
+                                            Toast.makeText(context, "Disimpan ke folder Unduhan/Konvert!", Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            Toast.makeText(context, "Gagal menyimpan berkas.", Toast.LENGTH_SHORT).show()
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (isSavedSuccessfully) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.secondaryContainer,
+                                        contentColor = if (isSavedSuccessfully) Color.White else MaterialTheme.colorScheme.onSecondaryContainer
+                                    ),
+                                    shape = RoundedCornerShape(16.dp),
+                                    modifier = Modifier.weight(1.4f)
+                                ) {
+                                    Icon(
+                                        imageVector = if (isSavedSuccessfully) Icons.Default.CheckCircle else Icons.Default.Download, 
+                                        contentDescription = "Simpan"
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(if (isSavedSuccessfully) "Tersimpan" else "Simpan")
+                                }
+
                                 OutlinedButton(
                                     onClick = { shareVideo(context, path) },
-                                    shape = RoundedCornerShape(12.dp),
-                                    modifier = Modifier.weight(1f)
+                                    shape = RoundedCornerShape(16.dp),
+                                    modifier = Modifier.weight(1.2f)
                                 ) {
                                     Icon(imageVector = Icons.Default.Share, contentDescription = "Bagikan")
                                     Spacer(modifier = Modifier.width(4.dp))
@@ -680,14 +958,15 @@ fun HistoryItemCard(
     val formattedDate = remember(item.timestamp) { dateFormatter.format(Date(item.timestamp)) }
 
     Card(
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(20.dp)) {
             // Header: Status Badge & Date
             Row(
                 modifier = Modifier.fillMaxWidth(),
